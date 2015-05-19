@@ -6,11 +6,21 @@ import sde
 
 class stats:
     def __init__(self, total, inserts, changes, deletes):
-        self.reportTotal = total
+        self.reportedTotal = total
         self.projectedInserts = inserts
         self.projectedChanges = changes
         self.projectedDeletes = deletes
-        self.projectedSum = sum([inserts, changes, deletes])
+        self.init_analysis()
+
+    def init_analysis(self):
+        self.foc = (self.projectedInserts, self.projectedChanges,
+                    self.projectedDeletes)
+        print 'Inserts: {}\nChanges: {}\nDeletes: {}'.format(*self.foc)
+        print self.reportedTotal, sum(self.foc)
+        if self.reportedTotal != sum(self.foc):
+            from sys import exit
+            print 'counts do not match'
+            exit(0)
 
 
 def parse(bsdi_file, today, source_name):
@@ -81,9 +91,9 @@ def process(text_file):
 def main(file, ali):
     insert_data, change_data, delete_data, numbers = process(file)
     data_counts = stats(*numbers)
-    sde.deletes(insert_data, ali)
-    sde.inserts(insert_data, ali)
+    sde.deletes(delete_data, ali)
     sde.changes(change_data, ali)
+    sde.inserts(insert_data, ali)
 
 
 if __name__ == '__main__':

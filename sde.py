@@ -12,8 +12,9 @@ def chunks(l, n):
 def inserts(data, table):
     with arcpy.da.Editor(os.path.dirname(table)) as edit:
         with arcpy.da.InsertCursor(table, '*') as cur:
-            for k in data:
+            for counter, k in enumerate(data):
                 cur.insertRow(data[k])
+                print counter
 
 
 def deletes(data, table):
