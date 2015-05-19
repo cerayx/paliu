@@ -4,6 +4,15 @@ from collections import defaultdict
 import sde
 
 
+class stats:
+    def __init__(self, total, inserts, changes, deletes):
+        self.reportTotal = total
+        self.projectedInserts = inserts
+        self.projectedChanges = changes
+        self.projectedDeletes = deletes
+        self.projectedSum = sum([inserts, changes, deletes])
+
+
 def parse(bsdi_file, today, source_name):
     def strip_list(rec):
         return map(
@@ -64,15 +73,17 @@ def process(text_file):
             group_key, primary_key, values = i[0], i[2], i[1:]
             data[group_key][primary_key] = values
 
-    analysis(data['U']['UTL'][4], len(data['I']),
-             len(data['C']), len(data['D']))
-    return data['I'], data['C'], data['D']
+    analysis = (data['U']['UTL'][4], len(data['I']),
+                len(data['C']), len(data['D']))
+    return data['I'], data['C'], data['D'], analysis
 
 
 def main(file, ali):
-    insert_data, change_data, delete_data = process(file)
-    sde.deletes(delete_data, ali)
-    # sde.inserts(insert_data, ali)
+    insert_data, change_data, delete_data, numbers = process(file)
+    data_counts = stats(*numbers)
+    sde.deletes(insert_data, ali)
+    sde.inserts(insert_data, ali)
+    sde.changes(change_data, ali)
 
 
 if __name__ == '__main__':
