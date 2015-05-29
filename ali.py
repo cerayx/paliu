@@ -4,23 +4,24 @@ from collections import defaultdict
 import sde
 
 
-class stats:
-    def __init__(self, total, inserts, changes, deletes):
-        self.reportedTotal = total
-        self.projectedInserts = inserts
-        self.projectedChanges = changes
-        self.projectedDeletes = deletes
+class Stats():
+    def __init__(self, total, i, c, d):
+        self.loadCount = total
+        self.fileCounts = {'INSERTS': i, 'CHANGES': c, 'DELETES': d}
+        self.verifiedCounts = {'INSERTS': 0, 'CHANGES': [], 'DELETES': 0}
         self.init_analysis()
 
     def init_analysis(self):
-        self.foc = (self.projectedInserts, self.projectedChanges,
-                    self.projectedDeletes)
-        print 'Inserts: {}\nChanges: {}\nDeletes: {}'.format(*self.foc)
-        print self.reportedTotal, sum(self.foc)
-        if self.reportedTotal != sum(self.foc):
+        elmens = self.fileCounts.values()
+        print 'INSERTS: {}\nCHANGES: {}\nDELETES: {}'.format(*elmens)
+        print self.loadCount, sum(elmens)
+        if self.loadCount != sum(elmens):
             from sys import exit
             print 'counts do not match'
             exit(0)
+
+    def post(self):
+        print self.verifiedCounts
 
 
 def parse(bsdi_file, today, source_name):
@@ -41,7 +42,7 @@ def parse(bsdi_file, today, source_name):
         if line[0] in ('C', 'I', 'D'):
             change_date = datetime.datetime.strptime(
                 line[190:196].strip(), "%m%d%y")
-            stnum = int(line[11:21] or 0)
+            stnum = int(line[11:21].strip() or 0)
             address = concat(stnum, line[21:25], line[25:27], line[27:67])
             fullname_esn = concat(line[21:25], line[25:27], line[27:67],
                                   line[165:168])
@@ -65,15 +66,6 @@ def parse(bsdi_file, today, source_name):
             yield strip_list(row)
 
 
-def analysis(footer_count, *foc):
-    print 'Inserts: {}\nChanges: {}\nDeletes: {}'.format(*foc)
-    print footer_count, sum(foc)
-    if footer_count != sum(foc):
-        from sys import exit
-        print 'counts do not match'
-        exit(0)
-
-
 def process(text_file):
     filename = os.path.basename(text_file)
     process_date = datetime.datetime.now()
@@ -90,13 +82,21 @@ def process(text_file):
 
 def main(file, ali):
     insert_data, change_data, delete_data, numbers = process(file)
-    data_counts = stats(*numbers)
-    sde.deletes(delete_data, ali)
-    sde.changes(change_data, ali)
-    sde.inserts(insert_data, ali)
+    metrics = Stats(*numbers)
+    # Treat the inserts like changes
+    metrics.verifiedCounts['DELETES'] = sde.deletes(delete_data, ali)
+    metrics.verifiedCounts['CHANGES'] = sde.changes(change_data, ali)
+    metrics.verifiedCounts['INSERTS'] = sde.changes(insert_data, ali)
+    metrics.post()
 
 
 if __name__ == '__main__':
-    data_file = os.path.join(os.getcwd(), 'bdaily20150512')
-    t01_ali = r'Database Connections\2014 Test.sde\GIS.DBO.T01_ALI'
-    main(data_file, t01_ali)
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    bsdi_path = os.path.join(current_path, 'data')
+    t01_ali = r'Database Connections\SCECD.sde\SCECD.DBO.T01_ALI_1'
+    archive = r'T:\ALI\Daily_Updates'
+    for filename in sorted(os.listdir(bsdi_path)):
+        current_file = os.path.join(bsdi_path, filename)
+        new_file = os.path.join(archive, filename)
+        main(current_file, t01_ali)
+        os.rename(current_file, new_file)

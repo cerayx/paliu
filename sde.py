@@ -9,29 +9,33 @@ def chunks(l, n):
         yield l[i:i + n]
 
 
-def inserts(data, table):
+def inserts(idata, table):
+    count = 0
     with arcpy.da.Editor(os.path.dirname(table)) as edit:
         with arcpy.da.InsertCursor(table, '*') as cur:
-            for counter, k in enumerate(data):
-                cur.insertRow(data[k])
-                print counter
+            for k in idata:
+                cur.insertRow(idata[k])
+                count += 1
+        return count
 
 
-def deletes(data, table):
-    if data:
-        bits = chunks(data.keys(), 1000)
+def deletes(ddata, table):
+    count = 0
+    if ddata:
+        bits = chunks(ddata.keys(), 1000)
         for z in bits:
-            query = '"TELEPHONE_NUMBER" IN ({})'.format(", ".join(z))
-            with arcpy.da.UpdateCursor(table, 'TELEPHONE_NUMBER', query) as cur:
+            qry = '"TELEPHONE_NUMBER" IN ({})'.format(", ".join(z))
+            with arcpy.da.UpdateCursor(table, 'TELEPHONE_NUMBER', qry) as cur:
                 for row in cur:
-                    if row[0] in data.iterkeys():
-                        # count += 1
-                        cur.deleteRow()
+                    count += 1
+                    cur.deleteRow()
+        return count
+    else:
+        return count
 
 
-def changes(data, table):
-    deletes(data, table)
-    inserts(data, table)
+def changes(cdata, table):
+    return [deletes(cdata, table), inserts(cdata, table)]
 
 
 if __name__ == '__main__':
