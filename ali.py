@@ -2,6 +2,7 @@ import os
 import datetime
 from collections import defaultdict
 import sde
+import scesftp
 
 
 class Stats():
@@ -91,6 +92,7 @@ def main(file, ali):
 
 
 if __name__ == '__main__':
+    scesftp.start()
     current_path = os.path.dirname(os.path.realpath(__file__))
     bsdi_path = os.path.join(current_path, 'data')
     t01_ali = r'Database Connections\SCECD.sde\SCECD.DBO.T01_ALI_1'
