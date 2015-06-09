@@ -3,6 +3,8 @@ import datetime
 from collections import defaultdict
 import sde
 import scesftp
+import message
+import parseStreetName
 
 
 class Stats():
@@ -47,12 +49,13 @@ def parse(bsdi_file, today, source_name):
             address = concat(stnum, line[21:25], line[25:27], line[27:67])
             fullname_esn = concat(line[21:25], line[25:27], line[27:67],
                                   line[165:168])
+            sname, stype, sdir = parseStreetName.main(line[27:67])
             row = (line[0], '', line[1:11], stnum, line[21:25], line[25:27],
                    line[27:67], line[73:105], line[105:107], line[107:127],
                    line[127:159], line[159:160], line[160:161], line[161:165],
                    line[165:168], line[170:180], line[180:187], change_date,
                    line[196:200], line[200:205], address, today, source_name,
-                   fullname_esn)
+                   fullname_esn, sname, stype, sdir)
             # row does not include FILLER D, END OF RECORD, NEW LINE CHARACTER
             # positions.
             yield strip_list(row)
@@ -61,7 +64,7 @@ def parse(bsdi_file, today, source_name):
             row = line[0], '', line[0:3], line[5:11], line[11:61], line[61:67]
             yield strip_list(row)
         elif line[0:3] == 'UTL':
-            # parses header/last row
+            # parses header/last row  
             count = int(line[61:70]or 0)
             row = line[0], '', line[0:3], line[5:11], line[11:61], count
             yield strip_list(row)
@@ -95,10 +98,12 @@ if __name__ == '__main__':
     scesftp.start()
     current_path = os.path.dirname(os.path.realpath(__file__))
     bsdi_path = os.path.join(current_path, 'data')
-    t01_ali = r'Database Connections\SCECD.sde\SCECD.DBO.T01_ALI_1'
+    t01_ali = r'Database Connections\SCECD.sde\SCECD.DBO.T01_ALI'
     archive = r'T:\ALI\Daily_Updates'
     for filename in sorted(os.listdir(bsdi_path)):
         current_file = os.path.join(bsdi_path, filename)
         new_file = os.path.join(archive, filename)
         main(current_file, t01_ali)
         os.rename(current_file, new_file)
+
+    message.main()
