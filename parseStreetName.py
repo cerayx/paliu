@@ -4,13 +4,13 @@ import re
 def getsdir(value):
     address = value.strip()
     pdir = re.compile(r'\s\b(N|S|E|W)\b$')
-    match = pdir.search(value.strip())
+    match = pdir.search(address)
     if match:
         post_dir = (match.group()).strip()
         address = address[:match.start()].strip()
         return address, post_dir
     else:
-        return value, ''
+        return address, ''
 
 
 def getstype(value):
@@ -60,24 +60,3 @@ if __name__ == '__main__':
             for row in cur:
                 row[1], row[2], row[3] = main(row[0])
                 cur.updateRow(row)
-    # Start an edit session. Must provide the worksapce.
-    # edit = arcpy.da.Editor(arcpy.env.workspace)
-
-    # # Edit session is started without an undo/redo stack for versioned data
-    # #  (for second argument, use False for unversioned data)
-    # edit.startEditing(True, True)
-
-    # # Start an edit operation
-    # edit.startOperation()
-
-    # # Insert a row into the table.
-    # with arcpy.da.UpdateCursor(t01_ali, ['STREET_NAME', 'NAME', 'TYPE', 'SUFDIR']) as cur:
-    #     for row in cur:
-    #         row[1], row[2], row[3] = main(row[0])
-    #         cur.updateRow(row)
-
-    # # Stop the edit operation.
-    # edit.stopOperation()
-
-    # # Stop the edit session and save the changes
-    # edit.stopEditing(True)
